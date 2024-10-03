@@ -89,9 +89,15 @@ end
     edgesOnEdge::IM   # (E)dges   (o)n (E)dge
     weightsOnEdge::FM # (W)eights (o)n (E)dge; reconstruction weights associated w/ EoE
 
+    # area of edge
+    angleEdge::FV
+    
+    # mask to determine if computation should be done on edge
+    edgeMask::IM 
+
+    # spacgin metrics
     dvEdge::FV
     dcEdge::FV 
-    angleEdge::FV
 end
 
 ###
@@ -248,6 +254,7 @@ function readEdgeInfo(ds)
 
     # dimension data
     nEdges = ds.dim["nEdges"]
+    nVertLevels = ds.dim["nVertLevels"]
 
     # coordinate data 
     xᵉ = ds["xEdge"][:]
@@ -272,10 +279,13 @@ function readEdgeInfo(ds)
     edgesOnEdge = ds["edgesOnEdge"][:,:]
     weightsOnEdge = ds["weightsOnEdge"][:,:]
 
+    angleEdge = ds["angleEdge"][:]
+    
+    edgeMask = zeros(Int32, (nVertLevels, nEdges))
+
     dvEdge = ds["dvEdge"][:]
     dcEdge = ds["dcEdge"][:]
 
-    angleEdge = ds["angleEdge"][:]
         
     Edges(nEdges = nEdges,
           xᵉ = xᵉ, yᵉ = yᵉ, zᵉ = zᵉ, fᵉ = fᵉ,
@@ -284,9 +294,10 @@ function readEdgeInfo(ds)
           verticesOnEdge = verticesOnEdge,
           edgesOnEdge = edgesOnEdge,
           weightsOnEdge = weightsOnEdge,
+          angleEdge = angleEdge,
+          edgeMask = edgeMask,
           dvEdge = dvEdge,
-          dcEdge = dcEdge, 
-          angleEdge = angleEdge)
+          dcEdge = dcEdge)
 end
 
 function signIndexField!(primaryCells::PrimaryCells, edges::Edges)
@@ -319,6 +330,10 @@ function signIndexField!(dualMesh::DualCells, edges::Edges)
          
         @inbounds iEdge = edgesOnVertex[i, iVertex]
         
+        # if edge missing from vertex (i.e. vertex is on a culled boundary),
+        # then leave edgeSignOnVertex as undefined (i.e. zero)
+        if iEdge == 0 continue end
+
         # vector points from cell 1 to cell 2
         if iVertex == verticesOnEdge[1, iEdge]
             @inbounds edgeSignOnVertex[i, iVertex] = -1
@@ -330,6 +345,19 @@ function signIndexField!(dualMesh::DualCells, edges::Edges)
     # DualCell struct is immutable so need to use Accessor package,
     @reset dualMesh.edgeSignOnVertex = edgeSignOnVertex
 end 
+
+function setBoundaryMask!(edges::Edges, v_mesh)
+    
+    @unpack Bot, Top = v_mesh.maxLevelEdge
+    @unpack nEdges, edgeMask = edges
+    
+    for iEdge in 1:nEdges, k in Bot[iEdge]:Top[iEdge]
+        edgeMask[k, iEdge] = 1.0
+    end
+
+    # Edges struct is immutable so need to use Accessor package,
+    @reset edges.edgeMask = edgeMask
+end
 
 function ReadHorzMesh(meshPath::String; backend=KA.CPU())
     
@@ -365,9 +393,10 @@ function Adapt.adapt_structure(to, edges::Edges)
                  verticesOnEdge = Adapt.adapt(to, edges.verticesOnEdge),
                  edgesOnEdge = Adapt.adapt(to, edges.edgesOnEdge),
                  weightsOnEdge = Adapt.adapt(to, edges.weightsOnEdge),
+                 angleEdge = Adapt.adapt(to, edges.angleEdge),
+                 edgeMask = Adapt.adapt(to, edges.edgeMask),
                  dvEdge = Adapt.adapt(to, edges.dvEdge),
-                 dcEdge = Adapt.adapt(to, edges.dcEdge), 
-                 angleEdge = Adapt.adapt(to, edges.angleEdge))
+                 dcEdge = Adapt.adapt(to, edges.dcEdge))
 end
 
 function Adapt.adapt_structure(to, cells::PrimaryCells)

@@ -19,8 +19,16 @@ const KA = KernelAbstractions
 struct Mesh{HM,VM}
     HorzMesh::HM
     VertMesh::VM
-    # inner constructor should check meshes are 
-    # on the same backend
+
+    function Mesh(HorzMesh::HM, VertMesh::VM) where {HM,VM}
+
+        # set the horizontal boundary masks
+        setBoundaryMask!(HorzMesh.Edges,        VertMesh)
+        #setBoundaryMask!(HorzMesh.DualCells,    VertMesh)
+        #setBoundaryMask!(HorzMesh.PrimaryCells, VertMesh)
+
+        new{HM, VM}(HorzMesh, VertMesh)
+    end
 end
 
 function Adapt.adapt_structure(backend, x::Mesh)

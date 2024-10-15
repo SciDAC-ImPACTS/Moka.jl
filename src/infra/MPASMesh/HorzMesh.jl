@@ -254,7 +254,8 @@ function readEdgeInfo(ds)
 
     # dimension data
     nEdges = ds.dim["nEdges"]
-    nVertLevels = ds.dim["nVertLevels"]
+    # base meshes don't neccessarily have vertical levels
+    nVertLevels = haskey(ds.dim, "nVertLevels") ? ds.dim["nVertLevels"] : 1
 
     # coordinate data 
     xᵉ = ds["xEdge"][:]

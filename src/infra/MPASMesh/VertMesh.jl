@@ -132,8 +132,8 @@ function VerticalMesh(mesh; nVertLevels=1, backend=KA.CPU())
     restingThickness    = KA.ones(backend, Float64, nCells)
     restingThicknessSum = KA.ones(backend, Float64, nCells) # MIGHT NEED TO CHANGE THIS
 
-    ActiveLevelsEdge = ActiveLevels{Edge}(maxLevelCells, mesh; backend=backend)
-    ActiveLevelsVertex = ActiveLevels{Vertex}(maxLevelCells, mesh; backend=backend)
+    ActiveLevelsEdge = ActiveLevels{Edge}(maxLevelCell, mesh; backend=backend)
+    ActiveLevelsVertex = ActiveLevels{Vertex}(maxLevelCell, mesh; backend=backend)
 
     # All array have been allocated on the requested backend,
     # so no need to call methods from Adapt

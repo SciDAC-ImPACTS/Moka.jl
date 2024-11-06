@@ -1,6 +1,6 @@
+authors = ["SciDAC Team"]
 name = "MOKA"
 uuid = "4c5738b9-ea62-4abc-b436-bc5c16744d63"
-authors = ["SciDAC Team"]
 version = "0.1.0"
 
 [deps]
@@ -27,8 +27,11 @@ StructArrays = "09ab397b-f2b6-538f-b94a-2f83cf4a842a"
 UnPack = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"
 YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
-[weakdeps]
-Enzyme = "7da242da-08ed-463a-9acd-ee780be4f1d9"
-
 [extensions]
 MPASEnzymeExt = "Enzyme"
+
+[extras]
+CUDA_Runtime_jll = "76a88914-d11a-5bdc-97e0-2f5a05c973a2"
+
+[weakdeps]
+Enzyme = "7da242da-08ed-463a-9acd-ee780be4f1d9"

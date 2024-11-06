@@ -250,12 +250,20 @@ function readDualMesh(ds)
               areaTriangle = areaTriangle)
 end 
 
-function readEdgeInfo(ds)
+function readEdgeInfo(ds; nVertLevels = 1)
 
     # dimension data
     nEdges = ds.dim["nEdges"]
+    
+    # check that the requested `nVertLevels` is consistent with mesh file
+    if haskey(ds.dim, "nVertLevels") && ds.dim["nVertLevels"] != nVertLevels
+        @warn """Requested nVertLevels does not match the number of vertical \n
+                 layers in the mesh file. 
+              """ 
+    end
+
     # base meshes don't neccessarily have vertical levels
-    nVertLevels = haskey(ds.dim, "nVertLevels") ? ds.dim["nVertLevels"] : 1
+    nVertLevels = haskey(ds.dim, "nVertLevels") ? ds.dim["nVertLevels"] : nVertLevels
 
     # coordinate data 
     xᵉ = ds["xEdge"][:]
@@ -271,7 +279,6 @@ function readEdgeInfo(ds)
 
     nEdgesOnEdge = ds["nEdgesOnEdge"][:]
 
-   
     # intra connectivity
     cellsOnEdge = ds["cellsOnEdge"][:,:]
     verticesOnEdge = ds["verticesOnEdge"][:,:]
@@ -360,13 +367,13 @@ function setBoundaryMask!(edges::Edges, v_mesh)
     @reset edges.edgeMask = edgeMask
 end
 
-function ReadHorzMesh(meshPath::String; backend=KA.CPU())
+function ReadHorzMesh(meshPath::String; nVertLevels=1, backend=KA.CPU())
     
     ds = NCDataset(meshPath, "r", format=:netcdf4)
 
     PrimaryMesh = readPrimaryMesh(ds)
     DualMesh    = readDualMesh(ds)
-    edges       = readEdgeInfo(ds)
+    edges       = readEdgeInfo(ds; nVertLevels=nVertLevels)
     
     # set the edge sign on cells (primary mesh)
     signIndexField!(PrimaryMesh, edges)
